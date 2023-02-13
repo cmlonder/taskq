@@ -217,7 +217,7 @@ func (q *Queue) ReserveN(
 		msg := &msgs[i]
 
 		if *sqsMsg.Body != "_" {
-			b, err := internal.DecodeString(*sqsMsg.Body)
+			b, err := q.Options().EncoderDecoder.DecodeString(*sqsMsg.Body)
 			if err != nil {
 				msg.Err = err
 			} else {
@@ -352,7 +352,12 @@ func (q *Queue) addBatch(msgs []*taskq.Message) error {
 			continue
 		}
 
-		str := internal.EncodeToString(b)
+		str, err := q.Options().EncoderDecoder.EncodeToString(b)
+		if err != nil {
+			msg.Err = err
+			internal.Logger.Printf("azsqs: Message.EncodeToString failed: %s", err)
+			continue
+		}
 		if str == "" {
 			str = "_" // SQS requires body.
 		}
@@ -441,7 +446,7 @@ func (q *Queue) batchSize(batch []*taskq.Message) int {
 			continue
 		}
 
-		size += internal.MaxEncodedLen(len(b))
+		size += q.Options().EncoderDecoder.MaxEncodedLen(len(b))
 	}
 	return size
 }

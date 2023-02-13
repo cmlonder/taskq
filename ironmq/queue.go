@@ -159,7 +159,7 @@ func (q *Queue) ReserveN(
 	for i, mqMsg := range mqMsgs {
 		msg := &msgs[i]
 
-		b, err := internal.DecodeString(mqMsg.Body)
+		b, err := q.Options().EncoderDecoder.DecodeString(mqMsg.Body)
 		if err != nil {
 			msg.Err = err
 		} else {
@@ -234,8 +234,13 @@ func (q *Queue) add(msg *taskq.Message) error {
 		return err
 	}
 
+	body, err := q.Options().EncoderDecoder.EncodeToString(b)
+	if err != nil {
+		return err
+	}
+
 	id, err := q.q.PushMessage(mq.Message{
-		Body:  internal.EncodeToString(b),
+		Body:  body,
 		Delay: int64(msg.Delay / time.Second),
 	})
 	if err != nil {

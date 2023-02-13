@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis_rate/v9"
+	"github.com/vmihailenco/taskq/v3/internal/encoding"
 )
 
 type QueueOptions struct {
@@ -58,6 +59,9 @@ type QueueOptions struct {
 
 	// Optional message handler. The default is the global Tasks registry.
 	Handler Handler
+
+	// Optional Encoder & Decoder. The default is the global ASCII85EncDec.
+	EncoderDecoder encoding.EncoderDecoder
 
 	inited bool
 
@@ -132,6 +136,10 @@ func (opt *QueueOptions) Init() {
 
 	if opt.Handler == nil {
 		opt.Handler = &Tasks
+	}
+
+	if opt.EncoderDecoder == nil {
+		opt.EncoderDecoder = &encoding.ASCII85EncDec
 	}
 }
 
